@@ -3,9 +3,179 @@
 <head>
   <title>Vintergatan5a!</title>
   <meta charset="utf-8">
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+  <script src="https://use.fontawesome.com/e7bac354b6.js"></script>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+
 </head>
 <body>
-  <h1>Hallå kexet!</h1>
-  <img src="https://i.ytimg.com/vi/ey5rtDslNiU/hqdefault.jpg"/>
+  <h3>Kryptovalutors prisförändringar</h3>
+  <p>Prisförändring under senaste 7 dagarna</p>
+
+  <fieldset>
+    <legend>Välj kryptovalutor</legend>
+    <div>
+      <input class="checkbox" type="checkbox" id="BTC" name="cryptocurrency" value="BTC" checked>
+      <label for="BTC">Bitcoin</label>
+    </div>
+    <div>
+      <input class="checkbox" type="checkbox" id="ETH" name="cryptocurrency" value="ETH" checked>
+      <label for="ETH">Etherum</label>
+
+      <input class="checkbox" type="checkbox" id="DASH" name="cryptocurrency" value="DASH" checked>
+      <label for="DASH">Dash</label>
+    </div>
+  </fieldset>
+
+<button id="generategraph">Generera graf</button>
+
+<script>
+
+$('#generategraph').click(function(){
+  $('#generategraph').prop('disabled', true);
+  addGraph($('#BTC').prop('checked'), $('#ETH').prop('checked'), $('#DASH').prop('checked'));
+});
+
+// config
+
+
+
+
+
+async function addGraph(BTC, ETH, DASH){
+
+  let currencies = [];
+  if(BTC){currencies.push('BTC')};
+  if(ETH){currencies.push('ETH')};
+  if(DASH){currencies.push('DASH')};
+
+  if (currencies.length == 0){alert("Du måste välja minst 1 alternativ."); return false};
+
+  let tradeCurrency = "USD";
+  let dates = {};
+
+    // get latest 7 days of dates
+    // getTime returns the number of milliseconds since 1970/01/01:
+    let today = new Date().getTime();
+    for (var i=0;i<7;i++) {
+      let milisecondsAday = 86400000;
+      let dayMS = today - (milisecondsAday*i);
+      let date = new Date(dayMS);
+
+      let year = date.getFullYear();
+      let month = date.getMonth()+1;
+      let day = date.getDate();
+      let fullDate = year + '-' + month + '-' + day;
+      dates[Math.trunc(dayMS/1000)] = fullDate;
+    }
+
+    var priceTable = {};
+
+    for(index in currencies){
+      let currencyName = currencies[index];
+      let c = 0;
+      var initprice = 0;
+
+      for(ts in dates){
+        let dateString = dates[ts];
+
+        priceTable[dateString] = priceTable[dateString] || {};
+        let apiQuery = 'https://min-api.cryptocompare.com/data/pricehistorical?fsym='+currencyName+'&tsyms='+tradeCurrency+'&ts='+ts;
+        let priceObject = await $.get(apiQuery);
+
+        if (priceObject[currencyName]) {
+          let price = priceObject[currencyName][tradeCurrency];
+          if (price) {
+            let priceDifferencePercentage = 0;
+
+            if (c==0) {
+              console.log("initprice",initprice);
+              initprice = Number(price).toFixed(2);
+              c++;
+            }else{
+              if (price == initprice) {
+                // pricechange didnt happen
+                priceDifferencePercentage=0;
+
+              }else if (price > initprice) {
+                  // price went up
+                  let increase = price-initprice;
+                  priceDifferencePercentage = (increase/initprice)*100;
+
+              }else if (price < initprice) {
+                  // price went down
+                  let decrease = initprice-price;
+                  priceDifferencePercentage = -(decrease/price)*100;
+
+              }
+            }
+
+            //console.log(price, currencyName, ts);
+            priceTable[dateString][currencyName] = Number(Number(priceDifferencePercentage).toFixed(2));
+          }
+
+        }else{
+          priceTable[dateString][currencyName] = 0;
+        }
+
+      }
+    }
+
+//console.log("priceTable",priceTable)
+
+    google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      dateTable = [];
+      let header = ['Datum'];
+      if(BTC){header.push('Bitcoin')};
+      if(ETH){header.push('Etherum')};
+      if(DASH){header.push('Dash')};
+
+      dateTable.push(header);
+      // Loop all saved timestamps
+
+      for (date in priceTable) {
+        var pDate = priceTable[date];
+        if (pDate) {
+          var tableRow = [date];
+          for(index in currencies){
+              let currency = currencies[index];
+              //console.log("pDate",pDate)
+              tableRow.push(pDate[currency]);
+          }
+          dateTable.push(tableRow);
+        }
+      }
+
+//console.log(dateTable);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable(dateTable);
+        var options = {
+          title: 'Kryptovalutors procentföräning i % baserat på en veckas värde.',
+          hAxis: {title: 'Datum',  titleTextStyle: {color: '#333'}, format:'0.00%'},
+          vAxis: {}
+        };
+
+        var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+
+        $('#generategraph').prop('disabled', false);
+      }
+
+}
+
+
+
+</script>
+
+
+  <div id="chart_div" style="width: 100%; height: 500px;"></div>
 </body>
 </html>
