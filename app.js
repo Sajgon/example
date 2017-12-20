@@ -50,7 +50,7 @@ app.get('/', function (req, res) {
     });
     
     // redirect user to index.html
-    res.redirect(__dirname + '/www/index.html');
+    res.redirect(__dirname + '/www');
 });
 
 
