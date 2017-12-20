@@ -12,6 +12,8 @@ app.listen(3000, function () {
 
 
 
+app.use(express.static(__dirname + '/www'));
+
 
 app.get('/', function (req, res) {
     
@@ -50,14 +52,14 @@ app.get('/', function (req, res) {
     });
     
     // redirect user to index.html
-    res.redirect('/index.html');
+    //res.redirect('/index.html');
 });
 
 
 
 
 
-// app.use(express.static(__dirname + '/www'));
+
 
 
 
