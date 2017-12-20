@@ -49,13 +49,15 @@ app.get('/', function (req, res) {
         });
     });
     
+    // redirect user to index.html
+    res.redirect(__dirname + '/www/index.html');
 });
 
 
 
 
 
-app.use(express.static(__dirname + '/www'));
+// app.use(express.static(__dirname + '/www'));
 
 
 
