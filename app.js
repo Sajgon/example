@@ -50,7 +50,8 @@ app.get('/', function (req, res) {
     });
     
     // redirect user to index.html
-    res.redirect(__dirname + '/www');
+    //res.redirect('https://cooling.vintergatan5a.se');
+    app.use(express.static(__dirname + '/www'));
 });
 
 
