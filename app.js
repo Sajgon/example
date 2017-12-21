@@ -12,7 +12,13 @@ app.listen(3000, function () {
 
 
 
-app.all('*', function (req, res) {
+
+// ????
+app.use(express.static(__dirname + '/www'));
+
+
+
+app.all('/', function (req, res) {
     
     // Connection URL
     const dbName = "Vintergatan5a-analystics";
@@ -51,12 +57,6 @@ app.all('*', function (req, res) {
     // redirect user to index.html
     //res.redirect('/index.html');
 });
-
-
-
-
-// ????
-app.use(express.static(__dirname + '/www'));
 
 
 
