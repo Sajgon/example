@@ -12,13 +12,12 @@ app.listen(3000, function () {
 
 
 
-
-// ????
+app.use(myLogger);
 app.use(express.static(__dirname + '/www'));
 
 
-
-app.all('/', function (req, res) {
+// Super simple middleware
+function myLogger(req, res, next) {
     
     // Connection URL
     const dbName = "Vintergatan5a-analystics";
@@ -56,7 +55,11 @@ app.all('/', function (req, res) {
     
     // redirect user to index.html
     //res.redirect('/index.html');
-});
+    
+    // or send it to the next middleware or route
+    next();
+};
+
 
 
 
